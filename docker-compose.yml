@@ -1,15 +1,18 @@
+version: "3"
 services:
 
     db:
         image: postgres
         restart: always
         environment:
-          POSTGRES_PASSWORD: admin
+             POSTGRES_USER: 'postgres'
+             POSTGRES_PASSWORD: 'admin'
         ports:
             - 5442:5432
         volumes:
             - ./db-scripts/create-securities-table.sql:/docker-entrypoint-initdb.d/create-securities-table.sql
-    
+
+
     adminer:
         image: adminer
         restart: always
@@ -26,11 +29,12 @@ services:
             db_password: admin
         ports:
             - 8081:80
-        depends_on: 
+        depends_on:
             - db
 
     zookeeper:
         image: 'wurstmeister/zookeeper:latest'
+        #hostname: zookeeper
         ports:
             - '2181:2181'
         environment:
@@ -38,39 +42,14 @@ services:
     kafka:
         image: 'wurstmeister/kafka:latest'
         ports:
-            - '9094:9092'
+            - '9092:9092'
         environment:
-            #DOCKER_API_VERSION: 1.22
-            KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://kafka:9094
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-            KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
-            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-            KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-            KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-            KAFKA_SOCKET_REQUEST_MAX_BYTES: 100001200
-            KAFKA_MESSAGE_MAX_BYTES: 100001200
-        healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:9092" ]
-            interval: 1m30s
-            timeout: 10s
-            retries: 3
-            start_period: 40s
+            - KAFKA_BROKER_ID=1
+            - KAFKA_LISTENERS=PLAINTEXT://:9092
+            - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+            - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+            - ALLOW_PLAINTEXT_LISTENER=yes
         depends_on:
             - zookeeper
 
 
-    openfigi:
-        build:
-            context: ./
-            dockerfile: ./kafka/Dockerfile
-        environment:
-            host_server: db
-            db_server_port: 5442
-            database_name: postgres
-            db_username: postgres
-            db_password: admin
-        depends_on:
-            - db
-            - kafka
-            #condition : service_healthy
-            - zookeeper

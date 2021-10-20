@@ -7,7 +7,8 @@ app = FastAPI()
 
 @app.on_event("startup")
 def startup():
-    repo.connect()
+    repo.fastapi_connect()
+    print("Connected to Postgres from Fast API")
 
 @app.on_event("shutdown")
 def shutdown():
