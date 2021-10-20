@@ -27,6 +27,14 @@ def getSecurityByType(securityType):
     result = connection.execute(query)
     return [dict(r) for r in result]
 
+def insertData(figi, securityType, marketSector, ticker, name, exchCode, shareClassFIGI, compositeFIGI, securityType2, securityDescription):
+    securities = db.Table('securities', metadata, autoload=True, autoload_with=engine)
+    query = db.insert(securities).values(figi=figi, securitytype=securityType, marketsector=marketSector, ticker=ticker,
+                                         name=name, exchcode=exchCode, shareclassfigi=shareClassFIGI, compositefigi=compositeFIGI,
+                                         securitytype2=securityType2, securitydescription=securityDescription)
+    connection.execute(query)
+    print(query)
+
 def disconnect():
     connection.close()
     engine.dispose()
